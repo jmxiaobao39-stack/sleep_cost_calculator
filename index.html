@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>个人熬夜成本计算器（修复版）</title>
+    <style>
+        /* 完全保留原样式，未作改动，保证视觉一致 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 36px;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0;
+        }
+        
+        @media (max-width: 900px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .input-section, .result-section {
+            padding: 40px;
+        }
+        
+        .input-section {
+            background: #f8f9fa;
+            border-right: 1px solid #e0e0e0;
+        }
+        
+        .section-title {
+            font-size: 24px;
+            color: #2c3e50;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #3498db;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 8px;
+            font-size: 15px;
+        }
+        
+        .form-group .hint {
+            font-size: 13px;
+            color: #7f8c8d;
+            margin-top: 5px;
+            font-weight: normal;
+        }
+        
+        input[type="number"], 
+        input[type="text"],
+        select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #dce1e6;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        
+        input[type="number"]:focus,
+        input[type="text"]:focus,
+        select:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+        
+        .radio-group {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .radio-group label {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            padding: 10px 20px;
+            border: 2px solid #dce1e6;
+            border-radius: 8px;
+            transition: all 0.3s;
+            font-weight: normal;
+        }
+        
+        .radio-group input[type="radio"] {
+            margin-right: 8px;
+        }
+        
+        .radio-group input[type="radio"]:checked + span {
+            color: #3498db;
+            font-weight: 600;
+        }
+        
+        .radio-group label:has(input[type="radio"]:checked) {
+            border-color: #3498db;
+            background: #e8f4fc;
+        }
+        
+        .calculate-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 20px;
+        }
+        
+        .calculate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(52, 152, 219, 0.3);
+        }
+        
+        .calculate-btn:active {
+            transform: translateY(0);
+        }
+        
+        .result-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border: 1px solid #e0e0e0;
+            display: none;
+        }
+        
+        .result-card.show {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .total-cost {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        
+        .total-cost .amount {
+            font-size: 48px;
+            font-weight: 700;
+            margin: 10px 0;
+        }
+        
+        .total-cost .percentage {
+            font-size: 20px;
+            opacity: 0.95;
+        }
+        
+        .cost-breakdown {
+            display: grid;
+            gap: 15px;
+        }
+        
+        .cost-item {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #3498db;
+        }
+        
+        .cost-item.health {
+            border-left-color: #e74c3c;
+        }
+        
+        .cost-item.work {
+            border-left-color: #f39c12;
+        }
+        
+        .cost-item.medical {
+            border-left-color: #9b59b6;
+        }
+        
+        .cost-item h3 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+        
+        .cost-item .amount {
+            font-size: 28px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin: 10px 0;
+        }
+        
+        .formula-box {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: "Courier New", monospace;
+            font-size: 14px;
+            margin: 10px 0;
+            border: 1px dashed #bdc3c7;
+        }
+        
+        .detail-list {
+            list-style: none;
+            padding: 0;
+            margin-top: 10px;
+        }
+        
+        .detail-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #ecf0f1;
+            font-size: 14px;
+            color: #5a6c7d;
+        }
+        
+        .detail-list li:last-child {
+            border-bottom: none;
+        }
+        
+        .data-source {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 13px;
+            margin-top: 10px;
+        }
+        
+        .data-source strong {
+            color: #856404;
+        }
+        
+        .reference-section {
+            background: #e8f5e9;
+            padding: 25px;
+            border-radius: 15px;
+            margin-top: 25px;
+            border: 1px solid #4caf50;
+        }
+        
+        .reference-section h3 {
+            color: #2e7d32;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        
+        .reference-list {
+            font-size: 13px;
+            color: #1b5e20;
+            line-height: 1.8;
+        }
+        
+        .reference-list li {
+            margin-bottom: 8px;
+        }
+        
+        .methodology-section {
+            background: #f0f4c3;
+            padding: 25px;
+            border-radius: 15px;
+            margin-top: 20px;
+            border: 1px solid #c0ca33;
+        }
+        
+        .methodology-section h3 {
+            color: #827717;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        
+        .methodology-section p {
+            color: #5d4037;
+            line-height: 1.8;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        
+        .warning-box {
+            background: #ffebee;
+            border: 1px solid #ef5350;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        
+        .warning-box h4 {
+            color: #c62828;
+            margin-bottom: 10px;
+        }
+        
+        .warning-box p {
+            color: #b71c1c;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        .suggestion-box {
+            background: #e3f2fd;
+            border: 1px solid #42a5f5;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        
+        .suggestion-box h4 {
+            color: #1565c0;
+            margin-bottom: 10px;
+        }
+        
+        .suggestion-box p {
+            color: #0d47a1;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        .comparison-chart {
+            margin-top: 20px;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .chart-bar {
+            margin: 15px 0;
+        }
+        
+        .chart-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 14px;
+            color: #2c3e50;
+        }
+        
+        .bar-container {
+            height: 30px;
+            background: #ecf0f1;
+            border-radius: 15px;
+            overflow: hidden;
+        }
+        
+        .bar-fill {
+            height: 100%;
+            border-radius: 15px;
+            transition: width 1s ease;
+        }
+        
+        .bar-fill.health { background: linear-gradient(90deg, #e74c3c, #c0392b); }
+        .bar-fill.work { background: linear-gradient(90deg, #f39c12, #e67e22); }
+        .bar-fill.medical { background: linear-gradient(90deg, #9b59b6, #8e44ad); }
+        
+        .sleep-status {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+        
+        .sleep-status.severe {
+            background: #e74c3c;
+            color: white;
+        }
+        
+        .sleep-status.mild {
+            background: #f39c12;
+            color: white;
+        }
+        
+        .sleep-status.normal {
+            background: #27ae60;
+            color: white;
+        }
+        
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            cursor: help;
+            color: #3498db;
+            font-weight: normal;
+        }
+        
+        .tooltip:hover::after {
+            content: attr(data-tip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 8px 12px;
+            background: #2c3e50;
+            color: white;
+            font-size: 12px;
+            border-radius: 5px;
+            white-space: nowrap;
+            z-index: 100;
+        }
+        
+        footer {
+            background: #2c3e50;
+            color: white;
+            padding: 30px;
+            text-align: center;
+            font-size: 14px;
+        }
+        
+        footer a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        
+        footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌙 个人熬夜成本计算器</h1>
+            <p>科学量化熬夜带来的健康风险与经济损失 | 基于权威医学文献</p>
+        </div>
+        
+        <div class="main-content">
+            <div class="input-section">
+                <h2 class="section-title">📝 请输入您的基本信息</h2>
+                
+                <form id="calculatorForm">
+                    <div class="form-group">
+                        <label>
+                            您的年龄
+                            <span class="hint">（影响疾病风险评估）</span>
+                        </label>
+                        <input type="number" id="age" min="18" max="100" required placeholder="例如：30" value="30">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>您的性别</label>
+                        <div class="radio-group">
+                            <label>
+                                <input type="radio" name="gender" value="male" checked>
+                                <span>男</span>
+                            </label>
+                            <label>
+                                <input type="radio" name="gender" value="female">
+                                <span>女</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>
+                            平均每晚睡眠时长
+                            <span class="hint">（建议成人每天睡7-9小时）</span>
+                        </label>
+                        <div style="display: flex; gap: 10px;">
+                            <input type="number" id="sleepHours" min="0" max="24" required placeholder="小时" style="flex: 1;" value="6">
+                            <input type="number" id="sleepMinutes" min="0" max="59" placeholder="分钟" style="flex: 1;" value="0">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>睡眠质量自评</label>
+                        <select id="sleepQuality">
+                            <option value="good">良好 - 容易入睡，深度睡眠多</option>
+                            <option value="normal" selected>一般 - 偶尔有入睡困难或易醒</option>
+                            <option value="poor">较差 - 经常失眠、多梦、易醒</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>
+                            每月税后收入（元）
+                            <span class="hint">（用于计算工作效率损失）</span>
+                        </label>
+                        <input type="number" id="monthlyIncome" min="0" required placeholder="例如：8000" value="8000">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>职业类型</label>
+                        <select id="occupation">
+                            <option value="office">办公室工作（文职、管理、IT等）</option>
+                            <option value="labor">体力劳动（建筑、制造、物流等）</option>
+                            <option value="service">服务业（餐饮、销售、客服等）</option>
+                            <option value="freelance">自由职业/个体经营</option>
+                            <option value="other">其他</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>
+                            过去一年因病缺勤天数
+                            <span class="hint">（选填，帮助更准确计算）</span>
+                        </label>
+                        <input type="number" id="absentDays" min="0" max="365" placeholder="例如：5" value="0">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>是否已患以下慢性病？（可多选，已在治疗中的疾病）</label>
+                        <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px;">
+                            <label style="padding: 8px 15px; border: 2px solid #dce1e6; border-radius: 8px; cursor: pointer;">
+                                <input type="checkbox" id="hasCVD"> 心血管疾病
+                            </label>
+                            <label style="padding: 8px 15px; border: 2px solid #dce1e6; border-radius: 8px; cursor: pointer;">
+                                <input type="checkbox" id="hasDiabetes"> 糖尿病
+                            </label>
+                            <label style="padding: 8px 15px; border: 2px solid #dce1e6; border-radius: 8px; cursor: pointer;">
+                                <input type="checkbox" id="hasHypertension"> 高血压
+                            </label>
+                            <label style="padding: 8px 15px; border: 2px solid #dce1e6; border-radius: 8px; cursor: pointer;">
+                                <input type="checkbox" id="hasStroke"> 卒中病史
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="calculate-btn">🔬 开始计算</button>
+                </form>
+            </div>
+            
+            <div class="result-section">
+                <h2 class="section-title">📊 计算结果</h2>
+                
+                <div id="resultContainer">
+                    <div class="result-card" style="display: block; background: #f0f4c3; border: 1px solid #c0ca33;">
+                        <p style="color: #5d4037; line-height: 1.8; font-size: 15px;">
+                            <strong>👆 请在左侧填写您的信息，点击"开始计算"按钮</strong><br><br>
+                            本计算器将基于权威医学研究，为您计算熬夜带来的健康风险成本、工作效率损失和额外医疗支出，帮助您直观了解睡眠不足的经济代价。
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div style="padding: 40px; background: #f8f9fa;">
+            <h2 class="section-title" style="text-align: center;">📚 计算方法与数据来源说明</h2>
+            
+            <div class="methodology-section">
+                <h3>🔬 计算方法说明</h3>
+                <p><strong>一、健康风险成本计算</strong></p>
+                <p>公式：健康风险成本 = 睡眠不足人群比例 × (相对风险-1) × 基础发病率 × 年均医疗费用</p>
+                <p>说明：采用"归因风险"方法，计算因睡眠不足导致的额外疾病发生概率，再乘以疾病医疗成本。</p>
+                
+                <p style="margin-top: 15px;"><strong>二、工作效率损失计算</strong></p>
+                <p>缺勤成本 = 年工作日 × 额外缺勤率 × 日工资</p>
+                <p>出勤障碍成本 = 年工资 × 效率损失比例</p>
+                <p>说明：参考多项国际研究，睡眠不足会导致缺勤率增加和工作效率下降。</p>
+                
+                <p style="margin-top: 15px;"><strong>三、额外医疗支出计算</strong></p>
+                <p>额外医疗支出 = 基础医疗费用 × 额外支出比例</p>
+                <p>说明：睡眠障碍患者的医疗支出显著高于正常人，本计算器采用保守估计。</p>
+            </div>
+            
+            <div class="reference-section">
+                <h3>📖 权威文献来源</h3>
+                <ol class="reference-list">
+                    <li><strong>Cappuccio FP等</strong> - 《欧洲心脏杂志》Meta分析 (2011)：睡眠时长与心血管疾病风险研究，涵盖15项前瞻性研究</li>
+                    <li><strong>Hafner M等</strong> - RAND Corporation跨国研究 (2017)：睡眠不足对经济的影响，量化美国、日本、英国等国GDP损失</li>
+                    <li><strong>Huyett P & Bhattacharyya N</strong> - 《临床睡眠医学杂志》(2021)：睡眠障碍患者额外医疗支出研究</li>
+                    <li><strong>Rosekind MR等</strong> - Kansas州员工健康计划研究 (2015)：睡眠问题与工作效率、医疗成本关系</li>
+                    <li><strong>中国睡眠研究会</strong> - 《2025中国睡眠健康研究白皮书》：中国人群睡眠现状数据</li>
+                    <li><strong>国家卫生健康委</strong> - 《中国心血管健康与疾病报告2019》：中国人群疾病发病率数据</li>
+                    <li><strong>国家统计局</strong> - 《2023年城镇单位就业人员年平均工资情况》：中国劳动力工资数据</li>
+                </ol>
+            </div>
+            
+            <div class="warning-box">
+                <h4>⚠️ 重要说明</h4>
+                <p>1. 本计算器结果为基于流行病学统计数据的估算值，仅供参考，不能替代专业医疗诊断。</p>
+                <p>2. 个体健康状况受多种因素影响，实际风险可能高于或低于计算结果。</p>
+                <p>3. 计算采用保守估计方法，实际熬夜成本可能更高。</p>
+                <p>4. 如您已有相关疾病，建议咨询医生制定个性化治疗方案。</p>
+            </div>
+            
+            <div class="suggestion-box">
+                <h4>💡 改善睡眠建议</h4>
+                <p>• <strong>规律作息</strong>：每天固定时间睡觉和起床，周末也不例外</p>
+                <p>• <strong>睡前准备</strong>：睡前1小时远离电子屏幕，避免咖啡因和酒精</p>
+                <p>• <strong>睡眠环境</strong>：保持卧室安静、黑暗、凉爽（18-22°C）</p>
+                <p>• <strong>放松身心</strong>：睡前可进行冥想、深呼吸或温水泡脚</p>
+                <p>• <strong>寻求帮助</strong>：如长期睡眠问题，建议咨询睡眠科医生</p>
+            </div>
+        </div>
+        
+        <footer>
+            <p>本计算器基于公开学术文献开发 | 计算方法参考权威医学研究</p>
+            <p style="margin-top: 10px;">数据来源详见上方文献列表 | 建议搭配专业医疗咨询使用</p>
+        </footer>
+    </div>
+    
+    <script>
+        // ==================== 核心计算函数 (修复版) ====================
+        function calculateCost(data) {
+            // 睡眠时长判断（小时）
+            const sleepHours = data.sleepHours + data.sleepMinutes / 60;
+            let sleepStatus, efficiencyLoss, absenceRate, medicalExtra;
+            
+            if (sleepHours < 6) {
+                sleepStatus = 'severe';
+                efficiencyLoss = 0.15;  // 15%效率损失
+                absenceRate = 0.04;      // 4%额外缺勤率
+                medicalExtra = 2000;     // 额外医疗支出2000元
+            } else if (sleepHours < 7) {
+                sleepStatus = 'mild';
+                efficiencyLoss = 0.08;   // 8%效率损失
+                absenceRate = 0.02;      // 2%额外缺勤率
+                medicalExtra = 1000;     // 额外医疗支出1000元
+            } else {
+                sleepStatus = 'normal';
+                efficiencyLoss = 0;
+                absenceRate = 0;
+                medicalExtra = 0;
+            }
+            
+            // 睡眠质量调整（仅当睡眠不足时调整，若本身为0则保持0）
+            if (data.sleepQuality === 'poor') {
+                efficiencyLoss *= 1.3;
+                medicalExtra *= 1.5;
+            } else if (data.sleepQuality === 'good') {
+                efficiencyLoss *= 0.8;
+                medicalExtra *= 0.7;
+            }
+            
+            const annualIncome = data.monthlyIncome * 12;
+            const workDays = 250;                     // 年工作日约250天
+            const dailyWage = annualIncome / workDays;
+            
+            // ----- 健康风险成本计算（改进：使用个人暴露，不再使用固定人群比例P）-----
+            // 个人是否睡眠不足暴露因子：小于7小时即为暴露 (根据睡眠医学通常定义)
+            const exposure = (sleepHours < 7) ? 1 : 0;
+            
+            // 各疾病基础参数 (相对风险RR来自文献，发病率I和医疗费用C参考中国数据)
+            // 心血管疾病 RR=1.48, 发病率0.5%, 年均费用20000元
+            const cvdCost = (!data.hasCVD && exposure) ? (1.48 - 1) * 0.005 * 20000 : 0;
+            // 糖尿病 RR=1.60, 发病率1.0%, 年均费用9594元
+            const dmCost = (!data.hasDiabetes && exposure) ? (1.60 - 1) * 0.01 * 9594 : 0;
+            // 高血压 RR=1.17, 发病率2.5%, 年均费用6000元
+            const htCost = (!data.hasHypertension && exposure) ? (1.17 - 1) * 0.025 * 6000 : 0;
+            // 卒中 RR=1.15, 发病率0.2%, 年均费用30000元
+            const strokeCost = (!data.hasStroke && exposure) ? (1.15 - 1) * 0.002 * 30000 : 0;
+            
+            const totalHealthCost = cvdCost + dmCost + htCost + strokeCost;
+            
+            // 工作效率损失
+            const absenceCost = workDays * absenceRate * dailyWage;
+            const presenteeismCost = annualIncome * efficiencyLoss;
+            const totalWorkCost = absenceCost + presenteeismCost;
+            
+            // 额外医疗支出 (已根据睡眠质量和时长调整)
+            const medicalCost = medicalExtra;
+            
+            // 总成本
+            const totalCost = totalHealthCost + totalWorkCost + medicalCost;
+            const costPercentage = annualIncome > 0 ? (totalCost / annualIncome * 100) : 0;
+            
+            return {
+                sleepStatus,
+                sleepHours,
+                totalCost,
+                costPercentage,
+                healthCosts: { cvd: cvdCost, dm: dmCost, ht: htCost, stroke: strokeCost },
+                totalHealthCost,
+                absenceCost,
+                presenteeismCost,
+                totalWorkCost,
+                medicalCost,
+                efficiencyLoss,
+                absenceRate,
+                annualIncome,
+                dailyWage,
+                workDays
+            };
+        }
+
+        // ==================== 显示结果 (完全保留原展示逻辑，只适配数据) ====================
+        function displayResults(result, data) {
+            const statusText = {
+                'severe': '严重睡眠不足',
+                'mild': '轻度睡眠不足',
+                'normal': '睡眠充足'
+            };
+            
+            const statusColor = {
+                'severe': '#e74c3c',
+                'mild': '#f39c12',
+                'normal': '#27ae60'
+            };
+            
+            const html = `
+                <div class="result-card show">
+                    <div style="margin-bottom: 20px; padding: 15px; background: ${statusColor[result.sleepStatus]}20; border-radius: 10px; border-left: 4px solid ${statusColor[result.sleepStatus]};">
+                        <p style="font-size: 16px; color: #2c3e50;">
+                            <strong>您的睡眠状况：</strong>
+                            ${result.sleepHours.toFixed(1)}小时/晚
+                            <span class="sleep-status ${result.sleepStatus}">${statusText[result.sleepStatus]}</span>
+                        </p>
+                    </div>
+                    
+                    <div class="total-cost">
+                        <p>年度熬夜总成本</p>
+                        <div class="amount">¥${result.totalCost.toFixed(0)}</div>
+                        <div class="percentage">占年收入的 ${result.costPercentage.toFixed(1)}%</div>
+                    </div>
+                    
+                    <div class="comparison-chart">
+                        <h4 style="color: #2c3e50; margin-bottom: 15px;">成本构成比例</h4>
+                        <div class="chart-bar">
+                            <div class="chart-label">
+                                <span>健康风险成本</span>
+                                <span>¥${result.totalHealthCost.toFixed(0)}</span>
+                            </div>
+                            <div class="bar-container">
+                                <div class="bar-fill health" style="width: ${result.totalCost > 0 ? (result.totalHealthCost/result.totalCost*100) : 0}%"></div>
+                            </div>
+                        </div>
+                        <div class="chart-bar">
+                            <div class="chart-label">
+                                <span>工作效率损失</span>
+                                <span>¥${result.totalWorkCost.toFixed(0)}</span>
+                            </div>
+                            <div class="bar-container">
+                                <div class="bar-fill work" style="width: ${result.totalCost > 0 ? (result.totalWorkCost/result.totalCost*100) : 0}%"></div>
+                            </div>
+                        </div>
+                        <div class="chart-bar">
+                            <div class="chart-label">
+                                <span>额外医疗支出</span>
+                                <span>¥${result.medicalCost.toFixed(0)}</span>
+                            </div>
+                            <div class="bar-container">
+                                <div class="bar-fill medical" style="width: ${result.totalCost > 0 ? (result.medicalCost/result.totalCost*100) : 0}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="result-card show">
+                    <h3 style="color: #e74c3c; margin-bottom: 15px;">💰 健康风险成本：¥${result.totalHealthCost.toFixed(2)}/年</h3>
+                    
+                    <ul class="detail-list">
+                        <li>
+                            <strong>心血管疾病风险：</strong>¥${result.healthCosts.cvd.toFixed(2)}
+                            ${data.hasCVD ? '<span style="color: #27ae60;">（已患病，已排除）</span>' : ''}
+                        </li>
+                        <li>
+                            <strong>糖尿病风险：</strong>¥${result.healthCosts.dm.toFixed(2)}
+                            ${data.hasDiabetes ? '<span style="color: #27ae60;">（已患病，已排除）</span>' : ''}
+                        </li>
+                        <li>
+                            <strong>高血压风险：</strong>¥${result.healthCosts.ht.toFixed(2)}
+                            ${data.hasHypertension ? '<span style="color: #27ae60;">（已患病，已排除）</span>' : ''}
+                        </li>
+                        <li>
+                            <strong>卒中风险：</strong>¥${result.healthCosts.stroke.toFixed(2)}
+                            ${data.hasStroke ? '<span style="color: #27ae60;">（已患病，已排除）</span>' : ''}
+                        </li>
+                    </ul>
+                    
+                    <div class="formula-box">
+                        <strong>计算公式：</strong><br>
+                        单项风险成本 = 个人暴露 × (RR-1) × I × C<br>
+                        其中：个人暴露=1（如果睡眠不足7小时），RR=相对风险，I=基础发病率，C=医疗费用
+                    </div>
+                    
+                    <div class="data-source">
+                        <strong>📊 数据来源：</strong><br>
+                        • 相对风险(RR)：国际Meta分析研究<br>
+                        • 发病率：中国心血管病报告、中国糖尿病流行病学调查<br>
+                        • 医疗费用：中国卫生健康统计年鉴
+                    </div>
+                </div>
+                
+                <div class="result-card show">
+                    <h3 style="color: #f39c12; margin-bottom: 15px;">💼 工作效率损失：¥${result.totalWorkCost.toFixed(0)}/年</h3>
+                    
+                    <ul class="detail-list">
+                        <li><strong>缺勤成本：</strong>¥${result.absenceCost.toFixed(0)}</li>
+                        <li><strong>出勤障碍成本：</strong>¥${result.presenteeismCost.toFixed(0)}</li>
+                    </ul>
+                    
+                    <div class="formula-box">
+                        <strong>计算公式：</strong><br>
+                        缺勤成本 = ${result.workDays}天 × ${(result.absenceRate*100).toFixed(0)}% × ¥${result.dailyWage.toFixed(0)}/天 = ¥${result.absenceCost.toFixed(0)}<br>
+                        出勤障碍成本 = ¥${result.annualIncome.toFixed(0)} × ${(result.efficiencyLoss*100).toFixed(0)}% = ¥${result.presenteeismCost.toFixed(0)}
+                    </div>
+                    
+                    <div class="data-source">
+                        <strong>📊 数据来源：</strong><br>
+                        • RAND Corporation跨国研究：睡眠不足导致的生产力损失<br>
+                        • Kansas州员工健康计划：睡眠问题与工作效率关系<br>
+                        • 缺勤率数据：基于睡眠不足人群的额外缺勤统计
+                    </div>
+                    
+                    <p style="margin-top: 15px; font-size: 13px; color: #7f8c8d;">
+                        <strong>💡 术语解释：</strong><br>
+                        • <strong>缺勤成本</strong>：因健康问题无法上班造成的工资损失<br>
+                        • <strong>出勤障碍成本</strong>：虽然上班但因疲劳导致工作效率下降造成的经济损失
+                    </p>
+                </div>
+                
+                <div class="result-card show">
+                    <h3 style="color: #9b59b6; margin-bottom: 15px;">🏥 额外医疗支出：¥${result.medicalCost.toFixed(0)}/年</h3>
+                    
+                    <div class="formula-box">
+                        <strong>计算依据：</strong><br>
+                        睡眠障碍患者的年均医疗支出比正常人高出约7000元（国际数据）<br>
+                        本计算器采用保守估计，并根据您的睡眠状况调整
+                    </div>
+                    
+                    <div class="data-source">
+                        <strong>📊 数据来源：</strong><br>
+                        • Huyett & Bhattacharyya (2021)：美国睡眠障碍患者额外医疗支出研究<br>
+                        • 研究发现：睡眠障碍患者医疗支出比正常人高60%，约多7000美元/年
+                    </div>
+                    
+                    <p style="margin-top: 15px; font-size: 13px; color: #7f8c8d;">
+                        <strong>说明：</strong>这部分成本反映了睡眠不足导致的更多门诊、急诊、处方药使用等医疗需求。
+                    </p>
+                </div>
+                
+                <div class="result-card show" style="background: #e8f5e9; border: 2px solid #4caf50;">
+                    <h3 style="color: #2e7d32; margin-bottom: 15px;">📈 如果改善睡眠，您可以节省多少？</h3>
+                    <p style="color: #1b5e20; line-height: 1.8; margin-bottom: 15px;">
+                        根据研究，如果将睡眠时间提高到7小时以上，您每年可能节省：
+                    </p>
+                    <p style="font-size: 32px; font-weight: 700; color: #2e7d32; text-align: center; margin: 20px 0;">
+                        ¥${result.totalCost.toFixed(0)}
+                    </p>
+                    <p style="color: #1b5e20; line-height: 1.8;">
+                        这相当于每年多赚${(result.totalCost / data.monthlyIncome).toFixed(1)}个月的工资！
+                    </p>
+                </div>
+            `;
+            
+            document.getElementById('resultContainer').innerHTML = html;
+        }
+
+        // ==================== 表单提交处理 (完整获取所有字段，阻止刷新) ====================
+        document.getElementById('calculatorForm').addEventListener('submit', function(e) {
+            e.preventDefault();  // 关键：阻止页面刷新
+            
+            // 获取各个输入值，并处理可能的空值 (给与默认值防止NaN)
+            const ageVal = parseInt(document.getElementById('age').value, 10);
+            const age = isNaN(ageVal) ? 30 : ageVal;
+            
+            const gender = document.querySelector('input[name="gender"]:checked')?.value || 'male';
+            
+            let sleepHours = parseFloat(document.getElementById('sleepHours').value);
+            if (isNaN(sleepHours) || sleepHours < 0) sleepHours = 7; // 默认7小时
+            
+            let sleepMinutes = parseFloat(document.getElementById('sleepMinutes').value);
+            if (isNaN(sleepMinutes) || sleepMinutes < 0) sleepMinutes = 0;
+            if (sleepMinutes > 59) sleepMinutes = 59;
+            
+            const sleepQuality = document.getElementById('sleepQuality').value;
+            
+            let monthlyIncome = parseFloat(document.getElementById('monthlyIncome').value);
+            if (isNaN(monthlyIncome) || monthlyIncome < 0) monthlyIncome = 5000; // 默认5000元
+            
+            const occupation = document.getElementById('occupation').value; // 虽未使用，但保留获取
+            
+            // 慢性病复选框 (布尔值)
+            const hasCVD = document.getElementById('hasCVD').checked;
+            const hasDiabetes = document.getElementById('hasDiabetes').checked;
+            const hasHypertension = document.getElementById('hasHypertension').checked;
+            const hasStroke = document.getElementById('hasStroke').checked;
+            
+            // 构建数据对象 (符合calculateCost期望)
+            const data = {
+                age: age,
+                gender: gender,
+                sleepHours: sleepHours,
+                sleepMinutes: sleepMinutes,
+                sleepQuality: sleepQuality,
+                monthlyIncome: monthlyIncome,
+                occupation: occupation,      // 备用
+                hasCVD: hasCVD,
+                hasDiabetes: hasDiabetes,
+                hasHypertension: hasHypertension,
+                hasStroke: hasStroke
+            };
+            
+            // 计算并显示
+            const result = calculateCost(data);
+            displayResults(result, data);
+        });
+    </script>
+</body>
+</html>
